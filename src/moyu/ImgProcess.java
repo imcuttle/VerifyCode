@@ -141,7 +141,14 @@ public class ImgProcess {
             }
         return outImg;
     }
-
+    public BufferedImage[] spiltMock () {
+        return new BufferedImage[]{
+            this.clip(5,6,10,17),
+            this.clip(19,6,10,17),
+            this.clip(35,6,10,17),
+            this.clip(49,6,10,17)
+        };
+    }
 
     public BufferedImage[] spilt (int needW, int needH) {
         LinkedList<BufferedImage> outImgs = new LinkedList<>();

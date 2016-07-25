@@ -5,6 +5,7 @@ import java.awt.image.BufferedImage;
 import java.awt.image.RenderedImage;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.net.URL;
 import java.util.List;
 import java.util.Map;
@@ -46,41 +47,16 @@ public class VerifyCode {
 //            System.out.print(Robot.recognize(img));
 //        }
 
+        BufferedImage image = ImageIO.read(new URL("http://njnumk.moyuyc.xyz/ranNumber"));
+        BufferedImage[] images = new ImgProcess(new ImgProcess(new ImgProcess(image).clip(2,2,image.getWidth()-4,image.getHeight()-4)).binary()).spiltMock();
 
-        // gray
-        BufferedImage imageG = ImageIO.read(new FileInputStream("data/1.png"));
-        ImageIO.write(new ImgProcess(imageG).gray(), "png", new File("data/gray.png"));
-
-/*
-        // reduce noise
-        BufferedImage imageR = ImageIO.read(new FileInputStream("data/src.png"));
-        ImageIO.write((RenderedImage) new ImgProcess(imageR).reduceNoise2(0, 1.0, 2.1), "png", new File("data/reduceSrc.png"));
-
-        imageR = ImageIO.read(new FileInputStream("data/gray.png"));
-        ImageIO.write((RenderedImage) new ImgProcess(imageR).reduceNoise2(0, 1.0, 2.1), "png", new File("data/reduceGray.png"));
-*/
+        for (int i=0;i<images.length;i++) {
+            BufferedImage im = images[i];
+            ImageIO.write(im,"jpeg",new FileOutputStream("data/spilt"+i+".jpeg"));
+        }
 
 
-        // binary
-        BufferedImage image = ImageIO.read(new FileInputStream("data/1.png"));
-        ImageIO.write(new ImgProcess(image).binary(), "png", new File("data/srcBin.png"));
-//        BufferedImage image2 = ImageIO.read(new FileInputStream("data/reduceSrc.png"));
-//        ImageIO.write(new ImgProcess(image2).binary(), "png", new File("data/reduceSrcBin.png"));
-        BufferedImage image3 = ImageIO.read(new FileInputStream("data/gray.png"));
-        ImageIO.write(new ImgProcess(image3).binary(), "png", new File("data/grayBin.png"));
-//        BufferedImage image4 = ImageIO.read(new FileInputStream("data/reduceGray.png"));
-//        ImageIO.write(new ImgProcess(image4).binary(), "png", new File("data/reduceGrayBin.png"));
 
-        BufferedImage image5 = ImageIO.read(new FileInputStream("data/srcBin.png"));
-        BufferedImage[] images = new ImgProcess(image5).spilt(10 ,16);
-        for(int i=0;i<images.length;i++)
-            ImageIO.write(images[i], "png", new File("data/srcBinSpilt"+(i+1)+".png"));
-
-        BinImage bin1 = new BinImage(ImageIO.read(new FileInputStream("data/srcBinSpilt1.png")));
-        BinImage bin2 = new BinImage(ImageIO.read(new FileInputStream("data/srcBinSpilt2.png")));
-        System.out.println(bin1.toString());
-        System.out.println(bin2.toString());
-        System.out.println(bin1.similarPercentage(ImageIO.read(new FileInputStream("data/srcBinSpilt2.png"))));
 
         /*
         BufferedImage image5 = ImageIO.read(new FileInputStream("data/srcBin.png"));

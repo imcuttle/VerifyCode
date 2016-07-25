@@ -34,8 +34,11 @@ class Handler implements HttpHandler {
 
         BufferedImage image = ImageIO.read(is);
         image = new ImgProcess(image).clip(2,2,image.getWidth()-4,image.getHeight()-4);
+        image = new ImgProcess(image).binary();
         String string = "";
-        for (BufferedImage img : new ImgProcess(new ImgProcess(image).binary()).spilt(10,16)) {
+        BufferedImage[] imgs = new ImgProcess(image).spilt(10,17);
+        if(imgs.length!=4) imgs = new ImgProcess(image).spiltMock();
+        for (BufferedImage img : imgs) {//
             string+=Robot.recognize(img);
         }
         t.sendResponseHeaders(200, string.length());
