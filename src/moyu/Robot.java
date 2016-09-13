@@ -1,7 +1,5 @@
 package moyu;
 
-import com.sun.org.apache.xerces.internal.impl.xpath.regex.Match;
-
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.File;

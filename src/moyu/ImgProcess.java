@@ -1,9 +1,7 @@
 package moyu;
 
-import javax.imageio.ImageIO;
-import java.awt.*;
+
 import java.awt.image.BufferedImage;
-import java.awt.image.MemoryImageSource;
 import java.util.*;
 
 /**
@@ -11,10 +9,13 @@ import java.util.*;
  */
 public class ImgProcess {
     private BufferedImage image;
+
+    public BufferedImage getImage() {return image;}
+
     public ImgProcess(BufferedImage img) {
         this.image = img;
     }
-    public BufferedImage gray () {
+    public ImgProcess gray () {
         BufferedImage outImg = new BufferedImage(image.getWidth(), image.getHeight(), image.getType());
         for(int j = 0;j < image.getHeight();j++) {
             for(int i = 0;i < image.getWidth();i++) {
@@ -23,10 +24,10 @@ public class ImgProcess {
                 outImg.setRGB(i, j, ImgUtil.Array2IntARGB(rgba));
             }
         }
-        return outImg;
+        return new ImgProcess(outImg);
     }
 
-    public BufferedImage binary () {
+    public ImgProcess binary () {
         BufferedImage outImg = new BufferedImage(image.getWidth(), image.getHeight(), image.getType());
         for(int j = 0;j < image.getHeight();j++) {
             for(int i = 0;i < image.getWidth();i++) {
@@ -42,11 +43,11 @@ public class ImgProcess {
 
             }
         }
-        return outImg;
+        return new ImgProcess(outImg);
     }
 
     // 膨胀算法
-    public BufferedImage expendEight () {
+    public ImgProcess expendEight () {
         BufferedImage outImg = new BufferedImage(image.getWidth(), image.getHeight(), image.getType());
         for(int j = 1;j < image.getHeight()-1;j++)
             for (int i = 1; i < image.getWidth()-1; i++) {
@@ -64,9 +65,9 @@ public class ImgProcess {
                     }
                 }
             }
-        return outImg;
+        return new ImgProcess(outImg);
     }
-    public BufferedImage expendTwo () {
+    public ImgProcess expendTwo () {
         BufferedImage outImg = new BufferedImage(image.getWidth(), image.getHeight(), image.getType());
         for(int j = 0;j < image.getHeight();j++)
             for (int i = 1; i < image.getWidth()-1; i++) {
@@ -78,11 +79,11 @@ public class ImgProcess {
                     }
                 }
             }
-        return outImg;
+        return new ImgProcess(outImg);
     }
 
     // 腐蚀算法
-    public BufferedImage corrodeEight () {
+    public ImgProcess corrodeEight () {
         BufferedImage outImg = new BufferedImage(image.getWidth(), image.getHeight(), image.getType());
         for(int j = 1;j < image.getHeight()-1;j++)
             for (int i = 1; i < image.getWidth()-1; i++) {
@@ -100,10 +101,10 @@ public class ImgProcess {
                     }
                 }
             }
-        return outImg;
+        return new ImgProcess(outImg);
     }
 
-    public BufferedImage corrodeTwo () {
+    public ImgProcess corrodeTwo () {
         BufferedImage outImg = new BufferedImage(image.getWidth(), image.getHeight(), image.getType());
         for(int j = 0;j < image.getHeight();j++)
             for (int i = 1; i < image.getWidth()-1; i++) {
@@ -115,22 +116,22 @@ public class ImgProcess {
                     }
                 }
             }
-        return outImg;
+        return new ImgProcess(outImg);
     }
     // 开运算
-    public BufferedImage openEight () {
-        return new ImgProcess(corrodeEight()).expendEight();
+    public ImgProcess openEight () {
+        return corrodeEight().expendEight();
     }
-    public BufferedImage openTwo () {
-        return new ImgProcess(corrodeTwo()).expendTwo();
+    public ImgProcess openTwo () {
+        return corrodeTwo().expendTwo();
     }
 
     // 闭运算
-    public BufferedImage closeEight () {
-        return new ImgProcess(expendEight()).corrodeEight();
+    public ImgProcess closeEight () {
+        return expendEight().corrodeEight();
     }
-    public BufferedImage closeTwo () {
-        return new ImgProcess(expendTwo()).corrodeTwo();
+    public ImgProcess closeTwo () {
+        return expendTwo().corrodeTwo();
     }
 
     public BufferedImage clip (int startx,int starty,int w,int h) {
@@ -141,12 +142,71 @@ public class ImgProcess {
             }
         return outImg;
     }
+    // 中值滤波
+    public ImgProcess middle () {
+        BufferedImage outImg = new BufferedImage(image.getWidth(), image.getHeight(), image.getType());
+        for(int j = 0;j < image.getHeight();j++)
+            for (int i = 0; i < image.getWidth(); i++) {
+                if(i==0||j==0||i==image.getWidth()-1||j==image.getHeight()-1) {
+                    outImg.setRGB(i,j,image.getRGB(i,j));
+                }else {
+                    outImg.setRGB(i,j,middle(new int[]{
+                            image.getRGB(i-1,j-1),image.getRGB(i,j-1),image.getRGB(i+1,j-1),
+                            image.getRGB(i-1,j),image.getRGB(i,j),image.getRGB(i+1,j),
+                            image.getRGB(i-1,j+1),image.getRGB(i,j+1),image.getRGB(i+1,j+1)
+                    }));
+                }
+            }
+        return new ImgProcess(outImg);
+    }
+
+    private int middle (int[] argbs) {
+        int[] rgbs = new int[argbs.length];
+        for (int i = 0;i<argbs.length;i++) {
+            int argb = argbs[i];
+            int[] arr = ImgUtil.IntARGB2Array(argb);
+            int rgb = arr[1]<<16|arr[2]<<8|arr[3];
+            rgbs[i] = rgb;
+        }
+        Arrays.sort(rgbs);
+        return (-1<<24)|rgbs[rgbs.length/2];
+    }
+    // 均值滤波
+    public ImgProcess average () {
+        BufferedImage outImg = new BufferedImage(image.getWidth(), image.getHeight(), image.getType());
+        for(int j = 0;j < image.getHeight();j++)
+            for (int i = 0; i < image.getWidth(); i++) {
+                if(i==0||j==0||i==image.getWidth()-1||j==image.getHeight()-1) {
+                    outImg.setRGB(i,j,image.getRGB(i,j));
+                }else {
+                    outImg.setRGB(i,j,average(new int[]{
+                        image.getRGB(i-1,j-1),image.getRGB(i,j-1),image.getRGB(i+1,j-1),
+                        image.getRGB(i-1,j),image.getRGB(i,j),image.getRGB(i+1,j),
+                        image.getRGB(i-1,j+1),image.getRGB(i,j+1),image.getRGB(i+1,j+1)
+                    }));
+                }
+            }
+        return new ImgProcess(outImg);
+    }
+
+    private int average (int[] argbs) {
+        int a=0,r=0,g=0,b=0;
+        for(int argb : argbs) {
+            int[] arr = ImgUtil.IntARGB2Array(argb);
+            a+=arr[0];
+            r+=arr[1];
+            g+=arr[2];
+            b+=arr[3];
+        }
+        return ImgUtil.Array2IntARGB(new int[]{Math.round(a/9),Math.round(r/9),Math.round(g/9),Math.round(b/9)});
+    }
+
     public BufferedImage[] spiltMock () {
         return new BufferedImage[]{
-            this.clip(5,6,10,17),
-            this.clip(19,6,10,17),
-            this.clip(35,6,10,17),
-            this.clip(49,6,10,17)
+            this.clip(4,6,10,17),
+            this.clip(20,6,10,17),
+            this.clip(34,6,10,17),
+            this.clip(50,6,10,17)
         };
     }
 
@@ -253,109 +313,85 @@ public class ImgProcess {
         return outImgs.toArray(new BufferedImage[]{});
     }
 
+    private int toBinary(int argb) {
+        return ImgUtil.isBlack(argb)?0:1;
+    }
+
+    private int[] zhangValidCommon(int i,int j) {
+        int[] p = {
+            toBinary(image.getRGB(i, j)),toBinary(image.getRGB(i, j-1)),toBinary(image.getRGB(i+1, j-1)),
+            toBinary(image.getRGB(i+1, j)),toBinary(image.getRGB(i+1, j+1)),toBinary(image.getRGB(i, j+1)),
+            toBinary(image.getRGB(i-1, j+1)),toBinary(image.getRGB(i-1, j)),toBinary(image.getRGB(i-1, j-1))
+        };
+        int sum = 0,quantity = 0;
+        for (int l = 1; l < p.length; l++) {
+            sum += p[l];
+            if(l<p.length-1 && p[l]==0 && p[l+1]==1)
+                quantity++;
+        }
+        return (sum>=2 && sum<=6 && quantity==1)?p:null;
+    }
+    private boolean isZhangValidFirst(int i, int j) {
+        int[] p = zhangValidCommon(i, j);
+        if(p!= null) {
+            return p[1]*p[3]*p[5]==0&&p[3]*p[5]*p[7]==0;
+        }
+        return false;
+    }
+    private boolean isZhangValidSecond(int i, int j) {
+        int[] p = zhangValidCommon(i, j);
+        if(p!= null) {
+            return p[1]*p[3]*p[7]==0&&p[1]*p[5]*p[7]==0;
+        }
+        return false;
+    }
+
+    public ImgProcess zhangThin() {
+        BufferedImage outImg = new BufferedImage(image.getWidth(), image.getHeight(), image.getType());
+        ImgUtil.copyTo(image,outImg);
+//        int times = 0;
+        List<Point> delList = new LinkedList<>();
+        while (true) {
+            boolean hasChange = false;
+            for (int j = 1; j < outImg.getHeight() - 1; j++)
+                for (int i = 1; i < outImg.getWidth() - 1; i++) {
+                    if (ImgUtil.isBlack(outImg.getRGB(i, j))) {
+                        if (isZhangValidFirst(i, j)) {
+                            hasChange = true;
+                            delList.add(new Point(i,j));
+                        }
+                    }
+                }
+            System.out.println(delList.size());
+            for (Point p:delList){
+                outImg.setRGB(p.x, p.y, WHITE_ARGB);
+            }
+            delList.clear();
+            for (int j = 1; j < outImg.getHeight() - 1; j++)
+                for (int i = 1; i < outImg.getWidth() - 1; i++) {
+                    outImg.setRGB(i, j, outImg.getRGB(i, j));
+                    if (ImgUtil.isBlack(outImg.getRGB(i, j))) {
+                        if (isZhangValidSecond(i, j)) {
+                            hasChange = true;
+                            delList.add(new Point(i,j));
+                        }
+                    }
+                }
+            System.out.println(delList.size());
+            for (Point p:delList){
+                outImg.setRGB(p.x, p.y, WHITE_ARGB);
+            }
+            delList.clear();
+            if(!hasChange) break;
+        }
+        return new ImgProcess(outImg);
+    }
+
 
     public final int BLACK_ARGB = -16777216;
     public final int WHITE_ARGB = -1;
 
 
-    public Image reduceNoise(double fa, double fb, double fc) {
-        Image sourceImage = image;
-        BufferedImage bi = new BufferedImage(sourceImage.getWidth(null),
-                sourceImage.getHeight(null), BufferedImage.TYPE_INT_RGB);
-        Graphics2D biContext = bi.createGraphics();
-
-        // get a BufferedImage object from an Image object
-        biContext.drawImage(sourceImage, 0, 0, null);
-        biContext.dispose();
-
-        // create an array of int type to store rgb values of each pixel
-        int[] rgbs = new int[bi.getWidth() * bi.getHeight()];
-
-        bi.getRGB(0, 0, bi.getWidth(), bi.getHeight(), rgbs, 0, bi.getWidth());
-
-        int height = bi.getHeight(), width = bi.getWidth();
-        for (int i = 0; i < height; i++) {
-            for (int j = 0; j < width; j++) {
-                double dd;
-                int d1, d2, d3;
-
-                d1 = 2;
-                if ((rgbs[i * width + j] & 0x00ffffff) == 0)
-                    d1 = -2;
-                d2 = 0;
-                int rc[][] = { { -1, 0 }, { 0, 1 }, { 1, 0 }, { 0, -1 } };
-                for (int k = 0; k < 4; k++) {
-                    if (isValid(i + rc[k][0], j + rc[k][1], height, width)) {
-
-                        if ((rgbs[(i + rc[k][0]) * width + j + rc[k][1]] & 0x00ffffff) == (rgbs[i
-                                * width + j] & 0x00ffffff))
-                            d2 += -2;
-                        else
-                            d2 += 2;
-                    }
-                }
-                d2 *= 2;
-                d3 = -2;
-
-                dd = fa * d1 - fb * d2 - fc * d3;
-                if (dd < 0)
-                    rgbs[i * width + j] = (rgbs[i * width + j] & 0xff000000)
-                            | (~rgbs[i * width + j] & 0x00ffffff);
-            }
-        }
-
-        // create a new Image object
-        Toolkit kit = Toolkit.getDefaultToolkit();
-        Image image = kit.createImage(new MemoryImageSource(bi.getWidth(), bi
-                .getHeight(), rgbs, 0, bi.getWidth()));
-
-        return image;
-    }
-
-    public Image reduceNoise2(double fa, double fb, double fc) {
-        BufferedImage bi = new BufferedImage(image.getWidth(null),
-                image.getHeight(null), image.getType());
-        int height = bi.getHeight(), width = bi.getWidth();
-
-        //bi.setRGB(0,0,width,height,image.getRGB(0,0,width,height,null,8,1),8,1);
-
-        for (int i = 0; i < height; i++) {
-            for (int j = 0; j < width; j++) {
-                bi.setRGB(j,i,image.getRGB(j,i));
-                double dd;
-                int d1, d2, d3;
-
-                d1 = 2;
-                if ((image.getRGB(j, i) & 0x00ffffff) == 0)
-                    d1 = -2;
-                d2 = 0;
-                int rc[][] = { { -1, 0 }, { 0, 1 }, { 1, 0 }, { 0, -1 } };
-                for (int k = 0; k < 4; k++) {
-                    if (isValid(i + rc[k][0], j + rc[k][1], height, width)) {
-
-                        if ((image.getRGB(j + rc[k][1],i + rc[k][0]) & 0x00ffffff) == (image.getRGB(j,i) & 0x00ffffff))
-                            d2 += -2;
-                        else
-                            d2 += 2;
-                    }
-                }
-                d2 *= 2;
-                d3 = -2;
-
-                dd = fa * d1 - fb * d2 - fc * d3;
-                if (dd < 0)
-                    bi.setRGB(j,i,(image.getRGB(j,i) & 0xff000000) | (~image.getRGB(j,i) & 0x00ffffff));
-            }
-        }
-
-        return bi;
-    }
-
-    private boolean isValid(int row, int col, int height, int width) {
-        return (row >= 0 && row < height && col >= 0 && col < width);
-    }
-
-    // 训练样本
 
 }
 

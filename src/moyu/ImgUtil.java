@@ -22,7 +22,12 @@ public class ImgUtil {
         return (rgba[0]<<24)|(rgba[1]<<16)|(rgba[2]<<8)|rgba[3];
     }
 
-
+    public static void copyTo(BufferedImage image,BufferedImage dest) {
+        for(int j = 0;j < image.getHeight();j++)
+            for (int i = 0; i < image.getWidth(); i++) {
+                dest.setRGB(i,j,image.getRGB(i, j));
+            }
+    }
     public static void main(String[] args) {
 //        System.out.println(Arrays.toString(IntRGBA2Array(-1)));
     }
